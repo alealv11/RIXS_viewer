@@ -2,7 +2,7 @@ import h5py
 
 class FileCaller:
     """
-    This deals with the VERITAS beamline hdf5 structure and returns the
+    This deals with the VERITAS beamline hdf5 data structure and returns the
     necessary data in a workable format
 
     """
@@ -24,7 +24,7 @@ class FileCaller:
 
     def list_maker(self):
         """Makes the lists of all the acquisition spectra for one measurement"""
-        
+
         # Define the loop start number as the first acquisition.
         acq_number = self.first_acq       
         comp_spectra = []
@@ -35,4 +35,7 @@ class FileCaller:
             current_spectra = self.hdf5_loader(acq_number)[:]
             comp_spectra.append(current_spectra)
             acq_number += 1
+        # Transposes the list of lists by dark magic. 
+        # https://stackoverflow.com/questions/6473679/transpose-list-of-lists
+        comp_spectra = list(map(list, zip(*comp_spectra)))
         return comp_spectra
