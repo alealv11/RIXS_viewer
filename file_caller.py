@@ -35,7 +35,4 @@ class FileCaller:
             current_spectra = self.hdf5_loader(acq_number)[:]
             comp_spectra.append(current_spectra)
             acq_number += 1
-        # Transposes the list of lists by dark magic. 
-        # https://stackoverflow.com/questions/6473679/transpose-list-of-lists
-        comp_spectra = list(map(list, zip(*comp_spectra)))
         return comp_spectra
