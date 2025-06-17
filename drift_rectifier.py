@@ -1,16 +1,66 @@
 import numpy as np
+from scipy.optimize import curve_fit
 
 class DriftRectifier:
     """Rectifies the thermal drift of the RIXS map."""
     def __init__(self, comp_spectra):
         self.comp_spectra = comp_spectra
-        self.difference = difference = []
+        self.aux_comp_spectra = []
+        self.difference = []
+        
+
+    def spectra_rectifier(self):
+        """General way to recttify the spectra given a difference array"""
+        # Define an output spectra as not to modify the original.
+        self.aux_comp_spectra = []
+        spectra_index = 0
+        for spectra in self.comp_spectra:
+            # Change to python lists to use pop and append method.
+            if type(spectra) is not list:
+                aux_spectra = spectra[:].tolist()
+            else:
+                aux_spectra = spectra[:]
+            difference_val = self.difference[spectra_index]
+            while difference_val != 0:
+                # Sign generalisation for "wiggly" data.
+                if difference_val > 0:
+                    # Pop and append the data where it corresponds.
+                    popped_value = aux_spectra.pop(-1)
+                    aux_spectra.insert(0, popped_value)
+                    difference_val += -1
+                elif difference_val < 0:
+                    popped_value = aux_spectra.pop(0)
+                    aux_spectra.append(popped_value)
+                    difference_val += 1
+            # Append the each corrected spectrum to the aux variable.
+            self.aux_comp_spectra.append(aux_spectra)
+            self.comp_spectra = self.aux_comp_spectra[:][:]
+            spectra_index += 1
+        return self.comp_spectra
+
+
+    def maxima_rectifier(self, min_value=0):
+        """Gives the maxima of each spectra in a difference list"""
+        self.difference = []
+        spectra_index = 0
+        first_max = np.argmax(self.comp_spectra[0])
+        for spectra in self.comp_spectra:
+            # Corrections for non null min value.
+            if min_value == 0:
+                maximum = np.argmax(self.comp_spectra[spectra_index][min_value:])
+            else:
+                maximum = min_value + np.argmax(self.comp_spectra[spectra_index][min_value:])
+            abs_difference = np.round(first_max - maximum)  
+            self.difference.append(abs_difference)
+            spectra_index += 1
+
 
     def linear_rectifier(self):
         """
         Substract a linear function to the spectra using the elastic peak start 
         and end as reference.
         """
+        self.difference = []
         first_spectra = 0
         # Minus one to correct for python starting index.
         last_spectra = len(self.comp_spectra) - 1
@@ -34,34 +84,20 @@ class DriftRectifier:
             abs_difference = np.round(first_max - line[spectra_index])
             self.difference.append(abs_difference)
             spectra_index += 1
-        
 
-    def spectra_rectifier(self):
-        """General way to recttify the spectra given a difference array"""
-        # Define an output spectra as not to modify the original.
-        aux_comp_spectra = []
+
+    def gaussian_rectifier(self):
+        """Find the elastic peaks using a gaussian fit."""
+        self.difference = []
+        def gauss(x, H, A, B):
+            return H + A * np.exp(-B * x**2)
+        
         spectra_index = 0
-
         for spectra in self.comp_spectra:
-            # Change to python lists to use pop and append method.
-            aux_spectra = spectra[:].tolist()
-            difference_val = self.difference[spectra_index]
-            while difference_val != 0:
-                # Generalisation for "wiggly" data that goes positive or negative.
-                if difference_val > 0:
-                    # Pop and append the data where it corresponds.
-                    popped_value = aux_spectra.pop(-1)
-                    aux_spectra.insert(popped_value, 0)
-                    difference_val += -1
-                elif difference_val < 0:
-                    popped_value = aux_spectra.pop(0)
-                    aux_spectra.append(popped_value)
-                    difference_val += 1
-            # Append the each corrected spectrum to the aux variable.
-            aux_comp_spectra.append(aux_spectra)
+            maximum = np.argmax(self.comp_spectra[spectra_index])
+            x_fit = np.linspace(maximum-50, maximum+50, 100)
+            popt, pcov= curve_fit(gauss, x_fit, 
+                self.comp_spectra[spectra_index][maximum-50:maximum+50],
+                p0 = [0,1,1])
             spectra_index += 1
-        return aux_comp_spectra
-
-
-
-        
+            print(pcov)

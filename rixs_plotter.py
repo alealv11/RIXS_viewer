@@ -16,10 +16,14 @@ comp_spectra = spec_0.list_maker()
 
 linea = DriftRectifier(comp_spectra)
 
-difference = linea.linear_rectifier()
-
-
+linea.linear_rectifier()
 spectra = linea.spectra_rectifier()
+linea.maxima_rectifier(4000)
+spectra = linea.spectra_rectifier()
+
+
+#linea.gaussian_rectifier()
+
 
 data = Plotter(spectra)
 
