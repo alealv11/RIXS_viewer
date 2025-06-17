@@ -14,6 +14,6 @@ class Plotter:
         # https://stackoverflow.com/questions/6473679/transpose-list-of-lists
         disp_spectra = list(map(list, zip(*self.comp_spectra)))
         fig, ax = plt.subplots()
-        im = ax.imshow(disp_spectra, cmap='plasma')
+        im = ax.imshow(disp_spectra, cmap='viridis')
         ax.set_aspect('auto')
         plt.show()  
