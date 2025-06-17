@@ -16,4 +16,4 @@ class Plotter:
         fig, ax = plt.subplots()
         im = ax.imshow(disp_spectra, cmap='viridis')
         ax.set_aspect('auto')
-        plt.show()  
+        plt.show(block=True) 
