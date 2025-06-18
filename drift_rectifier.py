@@ -17,6 +17,7 @@ class DriftRectifier:
         # Define an output spectra as not to modify the original.
         self.aux_comp_spectra = []
         spectra_index = 0
+        # Manual way to move spectra around activated by giving a column number.
         if column_number:
             while difference_val != 0:
                     # Sign generalisation for "wiggly" data.
