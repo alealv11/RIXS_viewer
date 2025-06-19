@@ -122,3 +122,8 @@ class DriftRectifier:
                 p0 = [0,1,1])
             spectra_index += 1
             print(pcov)
+
+    def negative_rectifier(self, neg_start_col, neg_end_col):
+        """Recrtifies negative values of the intensity"""
+        for column in range(neg_start_col,neg_end_col+1):
+            self.comp_spectra[column] = -1*self.comp_spectra[column]
