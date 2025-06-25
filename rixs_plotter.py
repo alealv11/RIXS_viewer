@@ -19,8 +19,8 @@ linea = DriftRectifier(comp_spectra)
 linea.negative_rectifier(0,5)
 linea.linear_rectifier()
 spectra = linea.spectra_rectifier(plot_switch=True)
-# linea.maxima_rectifier(4000)
-# spectra = linea.spectra_rectifier()
+linea.maxima_rectifier()
+spectra = linea.spectra_rectifier(plot_switch=True)
 # linea.spectra_rectifier(plot_switch=False,column_number=2,
 #     difference_val=5)
 # linea.spectra_rectifier(plot_switch=False,column_number=4,
