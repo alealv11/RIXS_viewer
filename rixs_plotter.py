@@ -16,11 +16,14 @@ comp_spectra = spec_0.list_maker()
 
 linea = DriftRectifier(comp_spectra)
 
+linea.cut_and_paste(6, 30)
 linea.negative_rectifier(0,5)
-linea.linear_rectifier()
-spectra = linea.spectra_rectifier(plot_switch=True)
-linea.maxima_rectifier()
-spectra = linea.spectra_rectifier(plot_switch=True)
+plot = Plotter(linea.comp_spectra)
+plot.show_plots()
+#linea.linear_rectifier()
+#spectra = linea.spectra_rectifier(plot_switch=True)
+#linea.maxima_rectifier()
+#spectra = linea.spectra_rectifier(plot_switch=True)
 # linea.spectra_rectifier(plot_switch=False,column_number=2,
 #     difference_val=5)
 # linea.spectra_rectifier(plot_switch=False,column_number=4,
