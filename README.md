@@ -1,5 +1,5 @@
                   ---README---
----This code was made by Alejandro Álvarez-Chico---
+---Code by Alejandro Álvarez-Chico---
 
 <b>Description:</b>\
 RIXS viewer is a code that reads and displays RIXS data from the VERITAS beamline in MAX IV.\
