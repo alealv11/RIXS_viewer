@@ -1,69 +1,58 @@
-import numpy as np
 from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+import numpy as np
 
+from file_caller import FileCaller
 from plotter import Plotter
 
 class DriftRectifier:
     """Rectifies the thermal drift of the RIXS map."""
-    def __init__(self, comp_spectra):
-        self.comp_spectra = comp_spectra
-        self.aux_comp_spectra = []
-        self.difference = []
-        
 
-    def spectra_rectifier(self, plot_switch=False, column_number='', 
-        difference_val=0):
-        """General and manual way to rectify the spectra given a difference array"""
-        # Define an output spectra as not to modify the original.
-        self.aux_comp_spectra = []
-        spectra_index = 0
-        
-        # Manual way to move spectra around activated by giving a column number.
-        if column_number:
-            while difference_val != 0:
+    def __init__(self, path, first_spectra, last_spectra):
+        raw_spectra = FileCaller(path, first_spectra, last_spectra)
+        self.comp_spectra = raw_spectra.list_maker()
+        self.myplot = []
+
+        # Automatic correction of negative values at the start.
+        i = 0
+        while i < len(self.comp_spectra):
+            self.comp_spectra[i] = [abs(x) for x in self.comp_spectra[i]]
+            i += 1
+
+        # Automatic linear rectification and display at the start.
+        self.maxima_rectifier()
+
+
+    def diff_set(self, differences, show_plots =True):
+        """
+        Takes the difference between the corrected position for each 
+        correction method and the actual position and corrects it.
+        """
+        if len(differences) == len(self.comp_spectra):
+            column = 0
+            for difference in differences:
+                while difference != 0:
                     # Sign generalisation for "wiggly" data.
-                    if difference_val > 0:
+                    if difference > 0:
                         # Pop and append the data where it corresponds.
-                        popped_value = self.comp_spectra[column_number].pop(-1)
-                        self.comp_spectra[column_number].insert(0, popped_value)
-                        difference_val += -1
-                    elif difference_val < 0:
-                        popped_value = self.comp_spectra[column_number].pop(0)
-                        self.comp_spectra[column_number].append(popped_value)
-                        difference_val += 1
+                        popped_value = self.comp_spectra[column].pop(-1)
+                        self.comp_spectra[column].insert(0, popped_value)
+                        difference += -1
+                    elif difference < 0:
+                        popped_value = self.comp_spectra[column].pop(0)
+                        self.comp_spectra[column].append(popped_value)
+                        difference += 1
+                column += 1
         else:
-            for spectra in self.comp_spectra:
-                # Change to python lists to use pop and append method.
-                if type(spectra) is not list:
-                    aux_spectra = spectra[:].tolist()
-                else:
-                    aux_spectra = spectra[:]
-                difference_val = self.difference[spectra_index]
-                while difference_val != 0:
-                    # Sign generalisation for "wiggly" data.
-                    if difference_val > 0:
-                        # Pop and append the data where it corresponds.
-                        popped_value = aux_spectra.pop(-1)
-                        aux_spectra.insert(0, popped_value)
-                        difference_val += -1
-                    elif difference_val < 0:
-                        popped_value = aux_spectra.pop(0)
-                        aux_spectra.append(popped_value)
-                        difference_val += 1
-                # Append the each corrected spectrum to the aux variable.
-                self.aux_comp_spectra.append(aux_spectra)
-                spectra_index += 1
-                self.comp_spectra = self.aux_comp_spectra[:][:]
+            print('Mismatch of array lenght.')
 
-        if plot_switch == True:
-            plot = Plotter(self.comp_spectra)
-            plot.show_plots()
-        return self.comp_spectra
-
+        myplot = Plotter(self.comp_spectra)
+        if show_plots == True:
+            myplot.show_plots()
 
     def maxima_rectifier(self, min_value=0):
         """Gives the maxima of each spectra in a difference list"""
-        self.difference = []
+        differences = []
         spectra_index = 0
         first_max = np.argmax(self.comp_spectra[0])
         for spectra in self.comp_spectra:
@@ -72,11 +61,24 @@ class DriftRectifier:
                 maximum = np.argmax(self.comp_spectra[spectra_index][min_value:])
             else:
                 maximum = min_value + np.argmax(self.comp_spectra[spectra_index][min_value:])
-            abs_difference = np.round(first_max - maximum)  
-            self.difference.append(abs_difference)
+            abs_differences = np.round(first_max - maximum)  
+            differences.append(abs_differences)
             spectra_index += 1
+        self.diff_set(differences)
+
+    def negative_rectifier(self, neg_start_col, neg_end_col):
+        """Manually rectifies negative values of the intensity."""
+        for column in range(neg_start_col,neg_end_col+1):
+            #print(self.comp_spectra[column])
+            self.comp_spectra[column] = [-x for x in self.comp_spectra[column]]
+
+    def cut_and_paste(self, cut_col, paste_col):
+        """Cuts from the col number provided to the paste col provided"""
+        for column in range(cut_col, paste_col+1):
+            self.comp_spectra.pop(cut_col)
 
 
+    #Not implemented need to redo
     def linear_rectifier(self):
         """
         Substract a linear function to the spectra using the elastic peak start 
@@ -123,13 +125,3 @@ class DriftRectifier:
                 p0 = [0,1,1])
             spectra_index += 1
             print(pcov)
-
-    def negative_rectifier(self, neg_start_col, neg_end_col):
-        """Rectifies negative values of the intensity"""
-        for column in range(neg_start_col,neg_end_col+1):
-            self.comp_spectra[column] = -1*self.comp_spectra[column]
-
-    def cut_and_paste(self, cut_col, paste_col):
-        """Cuts from the col number provided to the paste col provided"""
-        for column in range(cut_col, paste_col+1):
-            self.comp_spectra.pop(cut_col)
