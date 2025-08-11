@@ -11,4 +11,4 @@ path = 'C:/Users/ciber/Documents/Nickelates/RawData/20250522_DLD1 (1).h5'
 
 
 spectra = DriftRectifier(path,359,389)
-print(spectra.myplot)
+myplot.ylim = 5

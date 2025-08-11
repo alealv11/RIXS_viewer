@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from file_caller import FileCaller
-from plotter import Plotter
 
 class DriftRectifier:
     """Rectifies the thermal drift of the RIXS map."""
@@ -11,7 +10,6 @@ class DriftRectifier:
     def __init__(self, path, first_spectra, last_spectra):
         raw_spectra = FileCaller(path, first_spectra, last_spectra)
         self.comp_spectra = raw_spectra.list_maker()
-        self.myplot = []
 
         # Automatic correction of negative values at the start.
         i = 0
@@ -46,9 +44,7 @@ class DriftRectifier:
         else:
             print('Mismatch of array lenght.')
 
-        myplot = Plotter(self.comp_spectra)
-        if show_plots == True:
-            myplot.show_plots()
+        self.plotter()
 
     def maxima_rectifier(self, min_value=0):
         """Gives the maxima of each spectra in a difference list"""
@@ -125,3 +121,17 @@ class DriftRectifier:
                 p0 = [0,1,1])
             spectra_index += 1
             print(pcov)
+
+    def plotter(self, show_plots=True, xlim=[], ylim=[]):
+        """Deals with plotting and scaling"""
+
+        disp_spectra = list(map(list, zip(*self.comp_spectra)))
+        fig, ax = plt.subplots()
+        im = ax.imshow(disp_spectra, cmap='viridis')
+        ax.set_aspect('auto')
+        if xlim:
+            plt.xlim(xlim)
+        if ylim:
+            plt.ylim(ylim)
+        if show_plots == True:
+            plt.show(block=True)
