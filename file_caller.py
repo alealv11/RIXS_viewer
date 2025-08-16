@@ -41,5 +41,3 @@ class FileCaller:
             self.comp_spectra.append(current_spectra)
             acq_number += 1
         return self.comp_spectra
-
-    #def export_igor(self):

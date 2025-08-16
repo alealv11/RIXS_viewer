@@ -7,7 +7,7 @@ from file_caller import FileCaller
 class DriftRectifier:
     """Rectifies the thermal drift of the RIXS map."""
 
-    def __init__(self, path, first_spectra, last_spectra):
+    def __init__(self, path, first_spectra, last_spectra, auto=False):
         raw_spectra = FileCaller(path, first_spectra, last_spectra)
         self.comp_spectra = raw_spectra.list_maker()
 
@@ -18,7 +18,10 @@ class DriftRectifier:
             i += 1
 
         # Automatic linear rectification and display at the start.
-        self.maxima_rectifier()
+        if auto == True:
+            self.maxima_rectifier()
+        else:
+            self.plotter()
 
 
     def diff_set(self, differences, show_plots =True):
@@ -68,19 +71,20 @@ class DriftRectifier:
             #print(self.comp_spectra[column])
             self.comp_spectra[column] = [-x for x in self.comp_spectra[column]]
 
-    def cut_and_paste(self, cut_col, paste_col):
+    def cut_and_paste(self, cut_col, paste_col, show_plots=True):
         """Cuts from the col number provided to the paste col provided"""
         for column in range(cut_col, paste_col+1):
             self.comp_spectra.pop(cut_col)
+        if show_plots==True:
+            self.plotter()
 
 
-    #Not implemented need to redo
-    def linear_rectifier(self):
+    def linear_rectifier(self, show_plots=False):
         """
         Substract a linear function to the spectra using the elastic peak start 
         and end as reference.
         """
-        self.difference = []
+        differences = []
         first_spectra = 0
         # Minus one to correct for python starting index.
         last_spectra = len(self.comp_spectra) - 1
@@ -102,8 +106,12 @@ class DriftRectifier:
         spectra_index = 0
         while spectra_index <= last_spectra:
             abs_difference = np.round(first_max - line[spectra_index])
-            self.difference.append(abs_difference)
+            differences.append(abs_difference)
             spectra_index += 1
+        self.diff_set(differences)
+
+        if show_plots==True:
+            self.plotter()
 
     # Not yet implemented
     def gaussian_rectifier(self):
@@ -122,16 +130,18 @@ class DriftRectifier:
             spectra_index += 1
             print(pcov)
 
-    def plotter(self, show_plots=True, xlim=[], ylim=[]):
+    def plotter(self, show_plots=True):
         """Deals with plotting and scaling"""
 
         disp_spectra = list(map(list, zip(*self.comp_spectra)))
         fig, ax = plt.subplots()
         im = ax.imshow(disp_spectra, cmap='viridis')
         ax.set_aspect('auto')
-        if xlim:
-            plt.xlim(xlim)
-        if ylim:
-            plt.ylim(ylim)
         if show_plots == True:
             plt.show(block=True)
+
+    def export_igor(self, path):
+        """Export to a igor readable format (.csv)"""
+        save_spectra = list(map(list, zip(*self.comp_spectra)))
+        np.savetxt(path + '_igor.csv',
+                     save_spectra, delimiter=",")
